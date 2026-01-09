@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Villager Maker - Cult of the Lamb</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Who will join the cult today?</h1>
+
+        <div class="canvas-wrapper">
+            <canvas id="canvas"></canvas>
+            <div class="character-shadow"></div>
+            <div id="silhouette" class="silhouette"></div>
+            <div id="loading" class="loading">
+                <div class="loading-spinner"></div>
+                <span>Summoning...</span>
+            </div>
+        </div>
+
+        <div class="name-card">
+            <span class="name-value" id="attr-form">-</span>
+        </div>
+
+        <button class="reroll-btn" id="reroll-btn">Re-roll</button>
+    </div>
+
+    <script src="lib/spine-webgl.js"></script>
+    <script src="villager-randomizer.js"></script>
+    <script src="spine-renderer.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

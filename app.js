@@ -13,6 +13,7 @@ class RandomVillagerApp {
         this.randomizer = null;
         this.followerData = null;
         this.isShuffling = false;
+        this.audioContext = null;
 
         this.shuffleFrames = 8;
         this.shuffleBaseDelay = 50;
@@ -108,10 +109,46 @@ class RandomVillagerApp {
             const progress = i / (configs.length - 1);
             const delay = this.shuffleBaseDelay + (this.shuffleMaxDelay - this.shuffleBaseDelay) * (progress * (2 - progress));
 
+            if (i < configs.length - 1) this.playShuffleSound();
             await new Promise(r => setTimeout(r, delay));
         }
 
-        this.renderer.resetToIdle();
+        this.playLandSound();
+        // Don't call resetToIdle() - idle is already queued from playSpawnIn()
+    }
+
+    getAudioContext() {
+        if (!this.audioContext) {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (this.audioContext.state === "suspended") {
+            this.audioContext.resume();
+        }
+        return this.audioContext;
+    }
+
+    playShuffleSound() { this.playSound(600 + Math.random() * 200, 0.03); }
+    playLandSound() {
+        this.playSound(1000, 0.12);
+        setTimeout(() => this.playSound(1200, 0.08), 50);
+    }
+
+    playSound(frequency, duration) {
+        try {
+            const ctx = this.getAudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = "square";
+            osc.frequency.setValueAtTime(frequency, ctx.currentTime);
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + duration);
+        } catch (e) {}
     }
 
     resizeCanvas() {

@@ -13,12 +13,24 @@
 
 body {
     min-height: 100vh;
-    background: url('assets/background.webp') center center / cover no-repeat fixed;
+    background: #2a2a2a;
     font-family: "Lapture Bold", Georgia, "Times New Roman", serif;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 20px;
+}
+
+body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('assets/background.webp') center center / cover no-repeat;
+    filter: grayscale(70%) brightness(0.7);
+    z-index: -2;
 }
 
 .container {

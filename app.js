@@ -7,18 +7,22 @@ class RandomVillagerApp {
         this.canvas = document.getElementById("canvas");
         this.rerollBtn = document.getElementById("reroll-btn");
         this.loading = document.getElementById("loading");
-        this.silhouette = document.getElementById("silhouette");
         this.attrForm = document.getElementById("attr-form");
 
         this.renderer = null;
         this.randomizer = null;
         this.followerData = null;
-        this.audioContext = null;
         this.isShuffling = false;
 
         this.shuffleFrames = 8;
         this.shuffleBaseDelay = 50;
         this.shuffleMaxDelay = 200;
+
+        // Preload sounds
+        this.deathSound = new Audio("sounds/death.wav");
+        this.spawnSound = new Audio("sounds/spawn.wav");
+        this.deathSound.volume = 0.5;
+        this.spawnSound.volume = 0.6;
     }
 
     async init() {
@@ -38,7 +42,11 @@ class RandomVillagerApp {
 
             this.setupEventListeners();
             this.renderer.start();
-            this.onRerollClick();
+
+            // Show initial villager
+            const initialConfig = this.randomizer.generate();
+            this.renderer.applyConfig(initialConfig, this.followerData);
+            this.attrForm.textContent = this.followerData.forms[initialConfig.form].name || initialConfig.form;
 
         } catch (error) {
             console.error("Failed to initialize:", error);
@@ -61,9 +69,29 @@ class RandomVillagerApp {
 
         this.isShuffling = true;
         this.rerollBtn.disabled = true;
-        this.playClickSound();
-        this.silhouette.classList.add("hidden");
 
+        // Play death animation + sound
+        this.deathSound.currentTime = 0;
+        this.deathSound.play().catch(() => {});
+        const deathDuration = this.renderer.playDeath(1.2);
+        if (deathDuration > 0) {
+            await new Promise(r => setTimeout(r, (deathDuration / 1.2) * 1000));
+        }
+
+        // Generate and apply new villager
+        const finalConfig = this.randomizer.generate();
+        this.renderer.applyConfig(finalConfig, this.followerData);
+        this.attrForm.textContent = this.followerData.forms[finalConfig.form].name || finalConfig.form;
+
+        // Play spawn animation + sound
+        this.spawnSound.currentTime = 0;
+        this.spawnSound.play().catch(() => {});
+        const spawnDuration = this.renderer.playSpawnIn();
+        if (spawnDuration > 0) {
+            await new Promise(r => setTimeout(r, (spawnDuration / 1.5) * 1000));
+        }
+
+        // Shuffle through variations
         await this.shuffleAnimation();
 
         this.rerollBtn.disabled = false;
@@ -80,11 +108,10 @@ class RandomVillagerApp {
             const progress = i / (configs.length - 1);
             const delay = this.shuffleBaseDelay + (this.shuffleMaxDelay - this.shuffleBaseDelay) * (progress * (2 - progress));
 
-            if (i < configs.length - 1) this.playShuffleSound();
             await new Promise(r => setTimeout(r, delay));
         }
 
-        this.playLandSound();
+        this.renderer.resetToIdle();
     }
 
     resizeCanvas() {
@@ -97,41 +124,6 @@ class RandomVillagerApp {
         this.canvas.style.height = wrapper.clientHeight + "px";
 
         if (this.renderer) this.renderer.resize();
-    }
-
-    getAudioContext() {
-        if (!this.audioContext) {
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (this.audioContext.state === "suspended") {
-            this.audioContext.resume();
-        }
-        return this.audioContext;
-    }
-
-    playClickSound() { this.playSound(800, 0.08); }
-    playShuffleSound() { this.playSound(600 + Math.random() * 200, 0.03); }
-    playLandSound() {
-        this.playSound(1000, 0.12);
-        setTimeout(() => this.playSound(1200, 0.08), 50);
-    }
-
-    playSound(frequency, duration) {
-        try {
-            const ctx = this.getAudioContext();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-
-            osc.type = "square";
-            osc.frequency.setValueAtTime(frequency, ctx.currentTime);
-            gain.gain.setValueAtTime(0.1, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + duration);
-        } catch (e) {}
     }
 }
 

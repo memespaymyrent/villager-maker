@@ -75,14 +75,71 @@ class SpineRenderer {
         this.skeleton.scaleY = 1;
     }
 
+    playAnimation(name, loop = false, track = 0, speed = 1) {
+        const anim = this.skeletonData.findAnimation(name);
+        if (anim) {
+            const entry = this.animationState.setAnimation(track, name, loop);
+            entry.timeScale = speed;
+            return anim.duration;
+        }
+        return 0;
+    }
+
+    playDeath(speed = 1) {
+        const deathAnims = [
+            "die", "death", "Interactions/die", "sacrifice", "Interactions/sacrifice",
+            "ascend", "Interactions/ascend", "dissipate", "Interactions/dissipate",
+            "fall", "collapse", "faint", "Interactions/faint"
+        ];
+
+        for (const name of deathAnims) {
+            const duration = this.playAnimation(name, false, 0, speed);
+            if (duration > 0) return duration;
+        }
+
+        // Fallback: search for any death-like animation
+        const allAnims = this.skeletonData.animations.map(a => a.name);
+        const deathAnim = allAnims.find(n =>
+            n.toLowerCase().includes('die') ||
+            n.toLowerCase().includes('death') ||
+            n.toLowerCase().includes('sacrifice') ||
+            n.toLowerCase().includes('ascend')
+        );
+
+        if (deathAnim) {
+            return this.playAnimation(deathAnim, false, 0, speed);
+        }
+        return 0;
+    }
+
+    playSpawnIn(speed = 1.5) {
+        const spawnAnims = [
+            "spawn-in", "Spawn-In", "spawn", "drop", "drop-in", "land", "arrive",
+            "Buildings/spawn-in", "enter", "appear", "fall-in", "Spawn-In-Portal"
+        ];
+
+        for (const name of spawnAnims) {
+            const duration = this.playAnimation(name, false, 0, speed);
+            if (duration > 0) {
+                this.animationState.addAnimation(0, "idle", true, 0);
+                return duration;
+            }
+        }
+
+        this.resetToIdle();
+        return 0;
+    }
+
+    resetToIdle() {
+        this.animationState.setAnimation(0, "idle", true);
+    }
+
     applyConfig(config, followerData) {
         const formData = followerData.forms[config.form];
         const clothingData = followerData.clothing[config.clothing];
-
         const formVariant = formData.variants[config.formVariantIdx];
         const clothingVariant = clothingData.variants[config.clothingVariantIdx];
 
-        // Build combined skin
         const combinedSkin = new spine.Skin("RandomFollower");
 
         const formSkin = this.skeletonData.findSkin(formVariant);
@@ -94,14 +151,12 @@ class SpineRenderer {
         this.skeleton.setSkin(combinedSkin);
         this.skeleton.setToSetupPose();
 
-        // Apply form colors
         if (formData.canBeTinted) {
             const colorSets = [...formData.sets, ...followerData.generalColorSets];
             const colorSet = colorSets[config.formColorSetIdx % colorSets.length];
             if (colorSet) this.applyColors(colorSet);
         }
 
-        // Apply clothing colors
         if (clothingData.sets?.length > 0) {
             const clothingColorSet = clothingData.sets[config.clothingColorSetIdx % clothingData.sets.length];
             if (clothingColorSet) this.applyColors(clothingColorSet);
@@ -162,7 +217,7 @@ class SpineRenderer {
         this.renderer.camera.setViewport(width, height);
         this.gl.viewport(0, 0, width, height);
 
-        this.renderer.camera.position.set(0, 180, 0);
+        this.renderer.camera.position.set(0, 150, 0);
         this.renderer.camera.zoom = 0.55;
         this.renderer.camera.update();
 

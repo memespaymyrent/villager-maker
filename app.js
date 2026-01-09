@@ -15,9 +15,9 @@ class RandomVillagerApp {
         this.isShuffling = false;
         this.audioContext = null;
 
-        this.shuffleFrames = 8;
-        this.shuffleBaseDelay = 50;
-        this.shuffleMaxDelay = 200;
+        this.shuffleFrames = 16;
+        this.shuffleBaseDelay = 40;
+        this.shuffleMaxDelay = 320;
 
         // Preload sounds
         this.deathSound = new Audio("sounds/death.wav");
@@ -107,13 +107,15 @@ class RandomVillagerApp {
             this.attrForm.textContent = this.followerData.forms[configs[i].form].name || configs[i].form;
 
             const progress = i / (configs.length - 1);
-            const delay = this.shuffleBaseDelay + (this.shuffleMaxDelay - this.shuffleBaseDelay) * (progress * (2 - progress));
+            const delay = this.shuffleBaseDelay + (this.shuffleMaxDelay - this.shuffleBaseDelay) * (1 - Math.pow(1 - progress, 4));
 
-            if (i < configs.length - 1) this.playShuffleSound();
-            await new Promise(r => setTimeout(r, delay));
+            if (i < configs.length - 1) {
+                this.playShuffleSound();
+                await new Promise(r => setTimeout(r, delay));
+            } else {
+                this.playLandSound();
+            }
         }
-
-        this.playLandSound();
         // Don't call resetToIdle() - idle is already queued from playSpawnIn()
     }
 

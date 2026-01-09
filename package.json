@@ -1,0 +1,27 @@
+{
+  "name": "villager-maker",
+  "version": "1.0.0",
+  "description": "A random villager generator for Cult of the Lamb using Spine animations.",
+  "main": "app.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/memespaymyrent/villager-maker.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/memespaymyrent/villager-maker/issues"
+  },
+  "homepage": "https://github.com/memespaymyrent/villager-maker#readme",
+  "dependencies": {
+    "vercel": "^50.1.6"
+  }
+}
